@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Queens — Logic Puzzle</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1117;
+  --surface: #161b25;
+  --surface2: #1c222e;
+  --border: #2a3344;
+  --text: #e8ecf4;
+  --text-dim: #5c6a82;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59,130,246,0.3);
+  --success: #22c55e;
+  --success-glow: rgba(34,197,94,0.3);
+  --error: #ef4444;
+  --error-glow: rgba(239,68,68,0.25);
+  --gold: #f59e0b;
+
+  /* Region colors - soft pastels on dark */
+  --r1: #ef4444; --r1-bg: rgba(239,68,68,0.12); --r1-border: rgba(239,68,68,0.3);
+  --r2: #3b82f6; --r2-bg: rgba(59,130,246,0.12); --r2-border: rgba(59,130,246,0.3);
+  --r3: #22c55e; --r3-bg: rgba(34,197,94,0.12); --r3-border: rgba(34,197,94,0.3);
+  --r4: #f59e0b; --r4-bg: rgba(245,158,11,0.12); --r4-border: rgba(245,158,11,0.3);
+  --r5: #a855f7; --r5-bg: rgba(168,85,247,0.12); --r5-border: rgba(168,85,247,0.3);
+  --r6: #ec4899; --r6-bg: rgba(236,72,153,0.12); --r6-border: rgba(236,72,153,0.3);
+  --r7: #06b6d4; --r7-bg: rgba(6,182,212,0.12); --r7-border: rgba(6,182,212,0.3);
+  --r8: #f97316; --r8-bg: rgba(249,115,22,0.12); --r8-border: rgba(249,115,22,0.3);
+  --r9: #84cc16; --r9-bg: rgba(132,204,22,0.12); --r9-border: rgba(132,204,22,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset:0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(168,85,247,0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.app {
+  position: relative; z-index:1;
+  width:100%; max-width:480px;
+  padding: 16px;
+  display:flex; flex-direction:column; align-items:center;
+}
+
+/* HEADER */
+.header {
+  width:100%;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+
+.logo-area { display:flex; align-items:center; gap:10px; }
+
+.logo-crown { font-size:1.8rem; }
+
+.logo-text {
+  font-size:1.6rem; font-weight:800; letter-spacing:-0.5px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.logo-sub {
+  font-size:0.6rem; color:var(--text-dim); font-weight:600;
+  text-transform:uppercase; letter-spacing:2.5px;
+}
+
+.hdr-btns { display:flex; gap:6px; }
+
+.icon-btn {
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  width:38px; height:38px;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text-dim); font-size:0.9rem;
+  cursor:pointer; transition:all 0.2s;
+}
+
+.icon-btn:hover { border-color:var(--accent); color:var(--accent); }
+.icon-btn.active { border-color:var(--success); color:var(--success); background:rgba(34,197,94,0.08); }
+
+/* STATS */
+.stats-row {
+  width:100%; display:flex; gap:8px; margin-bottom:12px;
+}
+
+.stat-pill {
+  flex:1;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:7px 10px;
+  text-align:center;
+}
+
+.sp-label { font-size:0.56rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-dim); }
+.sp-val { font-family:'DM Mono',monospace; font-size:1.05rem; font-weight:500; }
+.sp-val.gold { color:var(--gold); }
+.sp-val.blue { color:var(--accent); }
+.sp-val.green { color:var(--success); }
+
+/* SIZE BAR */
+.size-bar { display:flex; gap:6px; margin-bottom:14px; width:100%; }
+
+.sz-btn {
+  flex:1; background:var(--surface); border:1.5px solid var(--border);
+  border-radius:10px; padding:7px 4px; text-align:center;
+  cursor:pointer; transition:all 0.2s;
+  font-size:0.75rem; font-weight:700; color:var(--text-dim);
+}
+
+.sz-btn:hover { border-color:var(--accent); }
+.sz-btn.active { border-color:var(--gold); background:rgba(245,158,11,0.08); color:var(--gold); box-shadow:0 0 10px rgba(245,158,11,0.15); }
+
+/* GRID */
+.grid-wrapper {
+  width:100%; max-width:400px;
+  aspect-ratio:1; position:relative;
+  margin-bottom:14px;
+}
+
+.grid {
+  display:grid; width:100%; height:100%;
+  gap:0; position:relative;
+}
+
+.cell {
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; position:relative;
+  transition: background 0.15s, box-shadow 0.15s;
+  font-size:1.3rem;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.cell:hover { filter:brightness(1.3); }
+
+/* Cell states */
+.cell .cell-content {
+  position:relative; z-index:2;
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:100%;
+}
+
+.cell .x-mark {
+  font-size:0.85rem; font-weight:800;
+  color: rgba(255,255,255,0.25);
+  line-height:1;
+}
+
+.cell .queen-mark {
+  font-size:1.4rem;
+  filter: drop-shadow(0 0 6px rgba(245,158,11,0.5));
+  animation: queenPlace 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes queenPlace {
+  0% { transform:scale(0); } 50% { transform:scale(1.2); } 100% { transform:scale(1); }
+}
+
+.cell.error-cell {
+  box-shadow: inset 0 0 0 2px var(--error) !important;
+  animation: errorShake 0.3s ease;
+}
+
+.cell.error-cell .queen-mark {
+  filter: drop-shadow(0 0 8px var(--error-glow));
+}
+
+@keyframes errorShake {
+  0%,100% { transform:translateX(0); } 25% { transform:translateX(-3px); } 75% { transform:translateX(3px); }
+}
+
+.cell.hint-cell {
+  box-shadow: inset 0 0 0 2px var(--accent), 0 0 14px var(--accent-glow) !important;
+  animation: hintPulse 1s ease infinite;
+}
+
+@keyframes hintPulse {
+  0%,100% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 14px var(--accent-glow); }
+  50% { box-shadow: inset 0 0 0 2px var(--accent), 0 0 22px var(--accent-glow); }
+}
+
+/* Region border rendering */
+.cell.border-top { border-top: 2.5px solid rgba(255,255,255,0.35) !important; }
+.cell.border-bottom { border-bottom: 2.5px solid rgba(255,255,255,0.35) !important; }
+.cell.border-left { border-left: 2.5px solid rgba(255,255,255,0.35) !important; }
+.cell.border-right { border-right: 2.5px solid rgba(255,255,255,0.35) !important; }
+
+/* WIN overlay */
+.win-overlay {
+  position:absolute; inset:0;
+  background:rgba(14,17,23,0.92);
+  backdrop-filter:blur(8px);
+  border-radius:12px;
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center;
+  z-index:20; gap:10px;
+}
+
+.win-overlay.active { display:flex; animation:fadeIn 0.4s ease; }
+
+@keyframes fadeIn { 0%{opacity:0} 100%{opacity:1} }
+
+.win-emoji { font-size:3.2rem; }
+.win-title { font-size:1.6rem; font-weight:800; color:var(--gold); }
+.win-sub { color:var(--text-dim); font-size:0.85rem; }
+
+.win-stats { display:flex; gap:20px; margin:8px 0; }
+.ws { text-align:center; }
+.ws-val { font-family:'DM Mono',monospace; font-size:1.4rem; font-weight:700; }
+.ws-label { font-size:0.58rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+
+.nxt-btn {
+  background:linear-gradient(135deg,#f59e0b,#ef4444);
+  color:white; border:none; border-radius:12px;
+  padding:14px 36px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:0.92rem; font-weight:800;
+  cursor:pointer; text-transform:uppercase;
+  letter-spacing:1.5px; transition:all 0.2s;
+  box-shadow:0 4px 16px rgba(245,158,11,0.3);
+  margin-top:6px;
+}
+
+.nxt-btn:hover { transform:translateY(-2px) scale(1.03); }
+
+/* CONTROLS */
+.ctrl-bar { width:100%; display:flex; gap:8px; }
+
+.cb {
+  flex:1; background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:10px; padding:10px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:0.76rem; font-weight:700;
+  color:var(--text-dim); cursor:pointer;
+  transition:all 0.2s;
+  text-transform:uppercase; letter-spacing:0.8px;
+  text-align:center;
+}
+
+.cb:hover { border-color:var(--accent); color:var(--accent); }
+
+/* LEGEND */
+.legend {
+  width:100%; display:flex; gap:16px; justify-content:center;
+  margin-top:10px; margin-bottom:4px;
+}
+
+.leg-item { display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--text-dim); font-weight:600; }
+
+/* HELP */
+.help-overlay {
+  position:fixed; inset:0;
+  background:rgba(14,17,23,0.92);
+  backdrop-filter:blur(8px);
+  z-index:200;
+  display:none; align-items:center; justify-content:center;
+  padding:20px;
+}
+
+.help-overlay.active { display:flex; }
+
+.help-box {
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:20px;
+  padding:28px 24px;
+  max-width:380px; width:100%;
+  position:relative;
+}
+
+.help-close { position:absolute; top:12px; right:14px; background:none; border:none; color:var(--text-dim); font-size:1.2rem; cursor:pointer; }
+
+.help-title { font-size:1.1rem; font-weight:800; margin-bottom:16px; text-align:center; color:var(--gold); }
+
+.help-rule { display:flex; gap:10px; align-items:flex-start; margin-bottom:12px; font-size:0.85rem; color:var(--text-dim); line-height:1.6; }
+
+.help-num {
+  width:26px; height:26px; flex-shrink:0;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'DM Mono',monospace;
+  font-size:0.75rem; font-weight:700;
+  color:var(--gold);
+}
+
+/* TOAST */
+.toast-msg {
+  position:fixed; top:20px; left:50%; transform:translateX(-50%);
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:10px 22px;
+  font-size:0.85rem; font-weight:700; z-index:100;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 1.8s forwards;
+}
+
+@keyframes toastIn { 0%{opacity:0;transform:translateX(-50%) translateY(-10px)} 100%{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes toastOut { to{opacity:0;transform:translateX(-50%) translateY(-10px)} }
+
+@media (max-width:420px) {
+  .cell .queen-mark { font-size:1.1rem; }
+  .cell .x-mark { font-size:0.7rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-crown">👑</div>
+      <div>
+        <div class="logo-text">Queens</div>
+        <div class="logo-sub">Logic Puzzle</div>
+      </div>
+    </div>
+    <div class="hdr-btns">
+      <button class="icon-btn" id="autoCheckBtn" onclick="toggleAutoCheck()" title="Auto-check">✓</button>
+      <button class="icon-btn" onclick="showHelp()" title="How to Play">❓</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-pill"><div class="sp-label">Queens</div><div class="sp-val gold" id="queensVal">0 / 5</div></div>
+    <div class="stat-pill"><div class="sp-label">Time</div><div class="sp-val blue" id="timerVal">0:00</div></div>
+    <div class="stat-pill"><div class="sp-label">Solved</div><div class="sp-val green" id="solvedVal">0</div></div>
+  </div>
+
+  <div class="size-bar">
+    <button class="sz-btn active" onclick="setSize(5,this)">5×5</button>
+    <button class="sz-btn" onclick="setSize(6,this)">6×6</button>
+    <button class="sz-btn" onclick="setSize(7,this)">7×7</button>
+    <button class="sz-btn" onclick="setSize(8,this)">8×8</button>
+    <button class="sz-btn" onclick="setSize(9,this)">9×9</button>
+  </div>
+
+  <div class="grid-wrapper">
+    <div class="grid" id="grid"></div>
+    <div class="win-overlay" id="winOverlay">
+      <div class="win-emoji">🏆</div>
+      <div class="win-title">Puzzle Solved!</div>
+      <div class="win-stats">
+        <div class="ws"><div class="ws-val gold" id="finalTime">0:00</div><div class="ws-label">Time</div></div>
+        <div class="ws"><div class="ws-val" style="color:var(--accent)" id="finalMoves">0</div><div class="ws-label">Moves</div></div>
+      </div>
+      <button class="nxt-btn" onclick="newPuzzle()">Next Puzzle →</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><span>Click once →</span> <span style="color:rgba(255,255,255,0.3);font-weight:800">✕</span></div>
+    <div class="leg-item"><span>Click twice →</span> <span style="font-size:1rem">👑</span></div>
+    <div class="leg-item"><span>Click again →</span> <span>Clear</span></div>
+  </div>
+
+  <div class="ctrl-bar">
+    <button class="cb" onclick="clearBoard()">✕ Clear</button>
+    <button class="cb" onclick="getHint()">💡 Hint</button>
+    <button class="cb" onclick="newPuzzle()">🔄 New</button>
+  </div>
+</div>
+
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-box">
+    <button class="help-close" onclick="closeHelp()">✕</button>
+    <div class="help-title">How to Play Queens</div>
+    <div class="help-rule"><div class="help-num">1</div><div>Place exactly <strong style="color:var(--gold)">one 👑</strong> in each <strong>row</strong>, <strong>column</strong>, and <strong>colored region</strong>.</div></div>
+    <div class="help-rule"><div class="help-num">2</div><div>No two 👑 can touch each other — not even <strong style="color:var(--error)">diagonally</strong>.</div></div>
+    <div class="help-rule"><div class="help-num">3</div><div><strong>Click once</strong> to mark ✕ (eliminate), <strong>twice</strong> to place 👑, <strong>third</strong> to clear.</div></div>
+    <div class="help-rule"><div class="help-num">4</div><div>Use 💡 <strong>Hint</strong> to highlight a region where a queen must go.</div></div>
+    <div class="help-rule"><div class="help-num">5</div><div>Enable <strong style="color:var(--success)">Auto-check ✓</strong> to see rule violations in real time.</div></div>
+  </div>
+</div>
+
+<script>
+// ===== REGION COLORS =====
+const REGION_STYLES = [
+  { bg: 'rgba(239,68,68,0.13)', border: 'rgba(239,68,68,0.35)' },
+  { bg: 'rgba(59,130,246,0.13)', border: 'rgba(59,130,246,0.35)' },
+  { bg: 'rgba(34,197,94,0.13)', border: 'rgba(34,197,94,0.35)' },
+  { bg: 'rgba(245,158,11,0.13)', border: 'rgba(245,158,11,0.35)' },
+  { bg: 'rgba(168,85,247,0.13)', border: 'rgba(168,85,247,0.35)' },
+  { bg: 'rgba(236,72,153,0.13)', border: 'rgba(236,72,153,0.35)' },
+  { bg: 'rgba(6,182,212,0.13)', border: 'rgba(6,182,212,0.35)' },
+  { bg: 'rgba(249,115,22,0.13)', border: 'rgba(249,115,22,0.35)' },
+  { bg: 'rgba(132,204,22,0.13)', border: 'rgba(132,204,22,0.35)' },
+];
+
+// ===== STATE =====
+let N = 5;
+let regionGrid = [];  // N×N, region ID per cell
+let cellStates = [];   // N×N, 0=empty, 1=X, 2=queen
+let solution = [];     // queen positions [{r,c}, ...]
+let moveCount = 0;
+let timerInterval;
+let seconds = 0;
+let autoCheck = false;
+let gameActive = false;
+let totalSolved = parseInt(localStorage.getItem('q_solved') || '0');
+
+// ===== PUZZLE GENERATION =====
+function generatePuzzle() {
+  // Step 1: Place N non-attacking queens
+  solution = [];
+  if (!placeQueens(0, [])) return false;
+
+  // Step 2: Generate contiguous colored regions around each queen
+  regionGrid = Array.from({length:N}, () => Array(N).fill(-1));
+  generateRegions();
+
+  return true;
+}
+
+function placeQueens(row, placed) {
+  if (row === N) {
+    solution = [...placed];
+    return true;
+  }
+
+  const cols = shuffleArr([...Array(N).keys()]);
+  for (const col of cols) {
+    if (isQueenSafe(placed, row, col)) {
+      placed.push({r:row, c:col});
+      if (placeQueens(row + 1, placed)) return true;
+      placed.pop();
+    }
+  }
+  return false;
+}
+
+function isQueenSafe(placed, row, col) {
+  for (const q of placed) {
+    if (q.c === col) return false;
+    if (Math.abs(q.r - row) <= 1 && Math.abs(q.c - col) <= 1) return false;
+  }
+  return true;
+}
+
+function generateRegions() {
+  // Assign each queen's cell to its region
+  solution.forEach((q, i) => { regionGrid[q.r][q.c] = i; });
+
+  // BFS grow regions to fill remaining cells
+  const unassigned = [];
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (regionGrid[r][c] === -1) unassigned.push({r, c});
+
+  // Shuffle and assign each unassigned cell to a neighboring region
+  shuffleArr(unassigned);
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    shuffleArr(unassigned);
+    for (let i = unassigned.length - 1; i >= 0; i--) {
+      const {r, c} = unassigned[i];
+      if (regionGrid[r][c] !== -1) { unassigned.splice(i, 1); continue; }
+
+      const neighbors = getNeighbors4(r, c);
+      const adjacentRegions = [];
+      for (const n of neighbors) {
+        const rid = regionGrid[n.r][n.c];
+        if (rid !== -1 && !adjacentRegions.includes(rid)) adjacentRegions.push(rid);
+      }
+
+      if (adjacentRegions.length > 0) {
+        regionGrid[r][c] = adjacentRegions[Math.floor(Math.random() * adjacentRegions.length)];
+        unassigned.splice(i, 1);
+        changed = true;
+      }
+    }
+  }
+
+  // Fill any remaining cells
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (regionGrid[r][c] === -1) regionGrid[r][c] = 0;
+}
+
+function getNeighbors4(r, c) {
+  const n = [];
+  if (r > 0) n.push({r:r-1, c});
+  if (r < N-1) n.push({r:r+1, c});
+  if (c > 0) n.push({r, c:c-1});
+  if (c < N-1) n.push({r, c:c+1});
+  return n;
+}
+
+function shuffleArr(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== RENDER =====
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${N}, 1fr)`;
+
+  cellStates = Array.from({length:N}, () => Array(N).fill(0));
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+
+      const rid = regionGrid[r][c];
+      const style = REGION_STYLES[rid % REGION_STYLES.length];
+      cell.style.background = style.bg;
+      cell.style.border = `1px solid ${style.border}`;
+
+      // Region borders (thick white borders between different regions)
+      if (r === 0) cell.classList.add('border-top');
+      if (r === N-1) cell.classList.add('border-bottom');
+      if (c === 0) cell.classList.add('border-left');
+      if (c === N-1) cell.classList.add('border-right');
+      if (r > 0 && regionGrid[r-1][c] !== rid) cell.classList.add('border-top');
+      if (r < N-1 && regionGrid[r+1][c] !== rid) cell.classList.add('border-bottom');
+      if (c > 0 && regionGrid[r][c-1] !== rid) cell.classList.add('border-left');
+      if (c < N-1 && regionGrid[r][c+1] !== rid) cell.classList.add('border-right');
+
+      cell.innerHTML = '<div class="cell-content"></div>';
+      cell.addEventListener('click', () => handleClick(r, c));
+
+      grid.appendChild(cell);
+
+      // Entrance animation
+      cell.style.opacity = '0';
+      cell.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+        cell.style.transition = 'opacity 0.2s, transform 0.2s, filter 0.15s, box-shadow 0.15s';
+        cell.style.opacity = '1';
+        cell.style.transform = 'scale(1)';
+      }, 15 + (r * N + c) * 8);
+    }
+  }
+}
+
+// ===== CLICK HANDLING =====
+function handleClick(r, c) {
+  if (!gameActive) return;
+
+  // Cycle: empty(0) → X(1) → queen(2) → empty(0)
+  cellStates[r][c] = (cellStates[r][c] + 1) % 3;
+  moveCount++;
+
+  updateCellVisual(r, c);
+  updateQueenCount();
+
+  if (autoCheck) checkErrors();
+  checkWin();
+}
+
+function updateCellVisual(r, c) {
+  const idx = r * N + c;
+  const cell = document.querySelectorAll('.cell')[idx];
+  const content = cell.querySelector('.cell-content');
+  cell.classList.remove('error-cell', 'hint-cell');
+
+  switch (cellStates[r][c]) {
+    case 0: content.innerHTML = ''; break;
+    case 1: content.innerHTML = '<span class="x-mark">✕</span>'; break;
+    case 2: content.innerHTML = '<span class="queen-mark">👑</span>'; break;
+  }
+}
+
+function updateQueenCount() {
+  let count = 0;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (cellStates[r][c] === 2) count++;
+  document.getElementById('queensVal').textContent = `${count} / ${N}`;
+}
+
+// ===== VALIDATION =====
+function checkErrors() {
+  // Clear all errors
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('error-cell'));
+
+  const queens = [];
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (cellStates[r][c] === 2) queens.push({r, c});
+
+  const errorCells = new Set();
+
+  for (let i = 0; i < queens.length; i++) {
+    for (let j = i + 1; j < queens.length; j++) {
+      const a = queens[i], b = queens[j];
+      let conflict = false;
+
+      // Same row
+      if (a.r === b.r) conflict = true;
+      // Same column
+      if (a.c === b.c) conflict = true;
+      // Adjacent (including diagonal)
+      if (Math.abs(a.r - b.r) <= 1 && Math.abs(a.c - b.c) <= 1) conflict = true;
+      // Same region
+      if (regionGrid[a.r][a.c] === regionGrid[b.r][b.c]) conflict = true;
+
+      if (conflict) {
+        errorCells.add(`${a.r},${a.c}`);
+        errorCells.add(`${b.r},${b.c}`);
+      }
+    }
+  }
+
+  const cells = document.querySelectorAll('.cell');
+  errorCells.forEach(key => {
+    const [r, c] = key.split(',').map(Number);
+    cells[r * N + c].classList.add('error-cell');
+  });
+
+  return errorCells.size === 0;
+}
+
+// ===== WIN CHECK =====
+function checkWin() {
+  let queenCount = 0;
+  const queens = [];
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (cellStates[r][c] === 2) { queenCount++; queens.push({r,c}); }
+
+  if (queenCount !== N) return;
+
+  // Validate: one per row, one per column, one per region, no adjacent
+  const rows = new Set(), cols = new Set(), regions = new Set();
+  for (const q of queens) {
+    if (rows.has(q.r) || cols.has(q.c)) return;
+    const rid = regionGrid[q.r][q.c];
+    if (regions.has(rid)) return;
+    rows.add(q.r); cols.add(q.c); regions.add(rid);
+  }
+
+  // No adjacent check
+  for (let i = 0; i < queens.length; i++) {
+    for (let j = i + 1; j < queens.length; j++) {
+      if (Math.abs(queens[i].r - queens[j].r) <= 1 && Math.abs(queens[i].c - queens[j].c) <= 1) return;
+    }
+  }
+
+  // WIN!
+  winGame();
+}
+
+function winGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+
+  totalSolved++;
+  localStorage.setItem('q_solved', totalSolved);
+  document.getElementById('solvedVal').textContent = totalSolved;
+
+  document.getElementById('finalTime').textContent = formatTime(seconds);
+  document.getElementById('finalMoves').textContent = moveCount;
+
+  // Flash cells gold
+  const cells = document.querySelectorAll('.cell');
+  cells.forEach((cell, i) => {
+    setTimeout(() => {
+      cell.style.boxShadow = '0 0 12px rgba(245,158,11,0.25)';
+      cell.style.borderColor = 'rgba(245,158,11,0.5)';
+    }, i * 15);
+  });
+
+  setTimeout(() => {
+    document.getElementById('winOverlay').classList.add('active');
+  }, cells.length * 15 + 300);
+}
+
+// ===== HINT =====
+function getHint() {
+  if (!gameActive) return;
+
+  // Clear previous hints
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('hint-cell'));
+
+  // Find a region without a queen placed
+  const regionsWithQueens = new Set();
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      if (cellStates[r][c] === 2) regionsWithQueens.add(regionGrid[r][c]);
+
+  // Find solution queen for an unsolved region
+  for (const q of solution) {
+    const rid = regionGrid[q.r][q.c];
+    if (!regionsWithQueens.has(rid)) {
+      // Highlight the region
+      const cells = document.querySelectorAll('.cell');
+      for (let r = 0; r < N; r++)
+        for (let c = 0; c < N; c++)
+          if (regionGrid[r][c] === rid)
+            cells[r * N + c].classList.add('hint-cell');
+      showToast(`Look at the highlighted region!`);
+      return;
+    }
+  }
+
+  showToast('All regions have queens!');
+}
+
+// ===== CONTROLS =====
+function clearBoard() {
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++) {
+      cellStates[r][c] = 0;
+      updateCellVisual(r, c);
+    }
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('error-cell', 'hint-cell'));
+  updateQueenCount();
+}
+
+function toggleAutoCheck() {
+  autoCheck = !autoCheck;
+  document.getElementById('autoCheckBtn').classList.toggle('active', autoCheck);
+  if (autoCheck) checkErrors();
+  else document.querySelectorAll('.cell').forEach(c => c.classList.remove('error-cell'));
+}
+
+function newPuzzle() {
+  document.getElementById('winOverlay').classList.remove('active');
+  moveCount = 0;
+  clearInterval(timerInterval);
+  seconds = 0;
+  document.getElementById('timerVal').textContent = '0:00';
+
+  let generated = false;
+  let attempts = 0;
+  while (!generated && attempts < 50) {
+    generated = generatePuzzle();
+    attempts++;
+  }
+
+  if (generated) {
+    renderGrid();
+    updateQueenCount();
+    gameActive = true;
+    timerInterval = setInterval(() => {
+      seconds++;
+      document.getElementById('timerVal').textContent = formatTime(seconds);
+    }, 1000);
+  }
+}
+
+function setSize(size, btn) {
+  N = size;
+  document.querySelectorAll('.sz-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  newPuzzle();
+}
+
+// ===== UTILS =====
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  return `${m}:${(s % 60).toString().padStart(2, '0')}`;
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast-msg';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+function showHelp() { document.getElementById('helpOverlay').classList.add('active'); }
+function closeHelp() { document.getElementById('helpOverlay').classList.remove('active'); }
+document.getElementById('helpOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('helpOverlay')) closeHelp();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'r' || e.key === 'R') newPuzzle();
+  if (e.key === 'h' || e.key === 'H') getHint();
+});
+
+// ===== INIT =====
+document.getElementById('solvedVal').textContent = totalSolved;
+newPuzzle();
+</script>
+</body>
+</html>
